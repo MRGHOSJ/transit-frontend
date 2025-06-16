@@ -1,8 +1,10 @@
 // lib/api.ts
 import axios from "axios";
 
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8081/api/v1";
+
 const api = axios.create({
-  baseURL: "http://localhost:8081/api/v1", // replace with your backend
+  baseURL, // replace with your backend
   timeout: 10000,
 });
 
