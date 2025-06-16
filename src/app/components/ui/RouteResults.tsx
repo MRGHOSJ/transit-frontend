@@ -39,7 +39,7 @@ export function RoutesResults({ routes, onClose }: RoutesResultsProps) {
   };
 
   const handleConfirm = (index: number) => {
-    alert("route Confirmed");
+    alert("route Confirmed: "+ index);
   };
 
   return (

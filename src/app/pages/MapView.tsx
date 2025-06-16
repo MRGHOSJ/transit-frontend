@@ -23,15 +23,16 @@ import SettingsPanel from "../components/ui/SettingsPanel";
 import { getRoute } from "../lib/api";
 import { RoutesResults } from "../components/ui/RouteResults";
 import { useLanguage } from "../context/LanguageContext";
+import { RouteOption } from "../types/route";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as { _getIconUrl?: string })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x.src,
   iconUrl: markerIcon.src,
   shadowUrl: markerShadow.src,
 });
 
-const TILE_STYLES = {
+const TILE_STYLES: Record<string, string> = {
   default: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
   light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -70,24 +71,42 @@ export default function MapUI() {
 
   const [showModeSelect, setShowModeSelect] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
-  const [routeData, setRouteData] = useState<any>(null);
+  const [routeData, setRouteData] = useState<{ routes: RouteOption[] } | null>(
+    null
+  );
   const [transportModes, setTransportModes] = useState<string[]>([]);
 
-  const { t, isRTL, lang, setLang } = useLanguage();
+  const { t, isRTL, setLang } = useLanguage();
 
   const debouncedFetch = useCallback(
-    debounce(async (q: string, type: "from" | "to") => {
+    (q: string, type: "from" | "to") => {
       if (!q) return;
-      const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          q
-        )}&limit=5`
-      );
-      type === "from"
-        ? setFromSuggestions(res.data)
-        : setToSuggestions(res.data);
-    }, 300),
-    []
+
+      const fetchData = async () => {
+        try {
+          const res = await axios.get<Place[]>(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+              q
+            )}&limit=5`
+          );
+          if (type === "from") {
+            setFromSuggestions(res.data);
+          } else {
+            setToSuggestions(res.data);
+          }
+        } catch (error) {
+          console.error("Error fetching location suggestions:", error);
+        }
+      };
+
+      // Debounce the fetch function
+      const debounced = debounce(fetchData, 300);
+      debounced();
+
+      // Cleanup function to cancel any pending debounced calls
+      return () => debounced.cancel();
+    },
+    [] // Add dependencies if needed (e.g., setFromSuggestions, setToSuggestions if they're not stable)
   );
 
   const handleSubmit = () => {
@@ -130,12 +149,13 @@ export default function MapUI() {
   };
 
   return (
-    <div className={`relative w-full h-screen bg-gray-100 ${isRTL ? 'rtl' : ''}`}>
+    <div
+      className={`relative w-full h-screen bg-gray-100 ${isRTL ? "rtl" : ""}`}
+    >
       <SettingsButton onClick={() => setSettingsOpen(true)} />
 
       {settingsOpen && (
         <SettingsPanel
-          isOpen={settingsOpen}
           onClose={() => setSettingsOpen(false)}
           onThemeChange={setTheme}
           onLangChange={setLang}

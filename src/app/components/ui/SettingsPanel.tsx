@@ -3,17 +3,37 @@
 import { motion } from "framer-motion";
 import Flag from "react-world-flags";
 import { useState } from "react";
-import { TileLayer } from "react-leaflet";
 import ThemeTilePreview from "./ThemeTilePreview";
 import { useLanguage } from "../../context/LanguageContext";
+import { Language } from "@/app/lib/translations";
+
+interface SettingsPanelProps {
+  onClose: () => void;
+  onThemeChange: (theme: string) => void;
+  onLangChange: (lang: Language) => void;
+  onTransportChange?: (transports: string[]) => void;
+}
+
+interface LanguageOption {
+  code: string;
+  label: string;
+  value: Language;
+}
+
+interface ThemesOptions {
+  label: string;
+  value: ThemeValue;
+}
+
+
+type ThemeValue = "default" | "dark" | "light" | "stadiaLight" | "stadiaOutdoors";
 
 export default function SettingsPanel({
-  isOpen,
   onClose,
   onThemeChange,
   onLangChange,
   onTransportChange,
-}: any) {
+}: SettingsPanelProps) {
   const [selectedTheme, setSelectedTheme] = useState("dark");
   const [selectedTransports, setSelectedTransports] = useState<string[]>([
     "metro",
@@ -21,17 +41,7 @@ export default function SettingsPanel({
   ]);
   const { t } = useLanguage();
 
-  const TILE_STYLES = {
-    default: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    stadiaLight:
-      "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
-    stadiaOutdoors:
-      "https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png",
-  };
-
-  const themes = [
+  const themes: ThemesOptions[] = [
     { value: "default", label: t("default") },
     { value: "dark", label: t("dark") },
     { value: "light", label: t("light") },
@@ -39,7 +49,7 @@ export default function SettingsPanel({
     { value: "stadiaOutdoors", label: t("stadiaOutdoors") },
   ];
 
-  const languages = [
+  const languages: LanguageOption[] = [
     { code: "US", label: "English", value: "en" },
     { code: "FR", label: "Français", value: "fr" },
     { code: "TN", label: "العربية", value: "ar" },
@@ -51,20 +61,19 @@ export default function SettingsPanel({
     { value: "taxiCollectif", label: t("taxiCollectif"), icon: "🚕" },
   ];
 
-  function handleThemeSelect(themeValue: string) {
+
+  function handleThemeSelect(themeValue: ThemeValue) {
     setSelectedTheme(themeValue);
     onThemeChange(themeValue);
   }
 
   function toggleTransport(value: string) {
-    let newSelected: string[];
-    if (selectedTransports.includes(value)) {
-      newSelected = selectedTransports.filter((v) => v !== value);
-    } else {
-      newSelected = [...selectedTransports, value];
-    }
+    const newSelected = selectedTransports.includes(value)
+      ? selectedTransports.filter((v) => v !== value)
+      : [...selectedTransports, value];
+
     setSelectedTransports(newSelected);
-    onTransportChange && onTransportChange(newSelected);
+    onTransportChange?.(newSelected);
   }
 
   return (
@@ -138,7 +147,7 @@ export default function SettingsPanel({
               }}
             >
               <div className="mb-2 text-sm font-semibold">{label}</div>
-              <ThemeTilePreview theme={value as keyof typeof TILE_STYLES} />
+              <ThemeTilePreview theme={value} />
             </button>
           ))}
         </div>

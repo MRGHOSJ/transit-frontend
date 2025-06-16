@@ -1,4 +1,8 @@
-export default function SettingsButton({ onClick }: any) {
+interface SettingsButtonProps {
+  onClick: () => void;
+}
+
+export default function SettingsButton({ onClick }: SettingsButtonProps) {
   return (
     <button
       onClick={onClick}

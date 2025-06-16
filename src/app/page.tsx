@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamically import MapView (avoids SSR issues with Leaflet)
